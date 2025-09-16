@@ -48,9 +48,9 @@ def main():
         "test_arbol_avl.py",
         "test_juego_completo.py",
         "test_requisitos_proyecto.py",
-        "test_estres.py",
-        "test_integracion_completa.py",
-        "test_finales.py",
+        "test_casos_edge.py",
+        "test_interfaz_grafica.py",
+        "test_finales_completas.py"
     ]
 
     resultados = []
