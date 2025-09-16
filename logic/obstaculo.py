@@ -30,7 +30,14 @@ class Obstaculo:
         TipoObstaculo.BARRERA: 25,
     }
 
-    def __init__(self, x, y, tipo, ancho=30, alto=30):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        tipo: TipoObstaculo,
+        ancho: int = 30,
+        alto: int = 30,
+    ) -> None:
         """
         Crea un nuevo obstáculo.
 
@@ -47,25 +54,25 @@ class Obstaculo:
         self.ancho = ancho
         self.alto = alto
 
-    def obtener_daño(self):
+    def obtener_daño(self) -> int:
         """
         Obtiene el daño que causa este obstáculo al carrito.
 
         Returns:
             int: Puntos de daño que causa este obstáculo
         """
-        pass
+        return self.DAÑO_POR_TIPO.get(self.tipo, 0)
 
-    def obtener_rectangulo_colision(self):
+    def obtener_rectangulo_colision(self) -> dict:
         """
         Obtiene el rectángulo de colisión del obstáculo.
 
         Returns:
             dict: Diccionario con 'x', 'y', 'ancho', 'alto' del rectángulo
         """
-        pass
+        return {"x": self.x, "y": self.y, "ancho": self.ancho, "alto": self.alto}
 
-    def esta_en_rango(self, x_min, x_max, y_min, y_max):
+    def esta_en_rango(self, x_min: int, x_max: int, y_min: int, y_max: int) -> bool:
         """
         Verifica si el obstáculo está dentro del rango especificado.
 
@@ -78,27 +85,27 @@ class Obstaculo:
         Returns:
             bool: True si está dentro del rango
         """
-        pass
+        return x_min <= self.x <= x_max and y_min <= self.y <= y_max
 
-    def obtener_sprite_nombre(self):
+    def obtener_sprite_nombre(self) -> str:
         """
         Obtiene el nombre del sprite asociado a este tipo de obstáculo.
 
         Returns:
             str: Nombre del archivo de sprite (sin extensión)
         """
-        pass
+        return self.tipo.value
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Representación en string del obstáculo.
 
         Returns:
             str: Información del obstáculo
         """
-        pass
+        return f"Obstaculo({self.tipo.value} en ({self.x}, {self.y}), daño: {self.obtener_daño()})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """
         Compara dos obstáculos por coordenadas.
 
@@ -108,13 +115,15 @@ class Obstaculo:
         Returns:
             bool: True si tienen las mismas coordenadas
         """
-        pass
+        if not isinstance(other, Obstaculo):
+            return False
+        return self.x == other.x and self.y == other.y
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """
         Hash del obstáculo basado en sus coordenadas.
 
         Returns:
             int: Hash del obstáculo
         """
-        pass
+        return hash((self.x, self.y))
