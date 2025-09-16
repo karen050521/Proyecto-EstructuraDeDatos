@@ -1,0 +1,13 @@
+[project]
+name = "jeffy-ds"
+version = "0.1.0"
+description = "Juego de Carrito con Obstáculos Dinámicos usando Árbol AVL"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pgzero>=1.2.1",
+    "pygame>=2.0.0",
+]
+
+[project.scripts]
+juego = "main:main"
