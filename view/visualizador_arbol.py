@@ -49,7 +49,24 @@ class VisualizadorArbol:
             x_offset (int): Desplazamiento X
             y_offset (int): Desplazamiento Y
         """
-        pass
+        if arbol_avl.raiz is None:
+            # Dibujar mensaje de árbol vacío
+            screen.draw.text(
+                "Arbol vacio",
+                (x_offset + self.ancho // 2 - 50, y_offset + self.alto // 2),
+                fontsize=20,
+                color=self.color_texto
+            )
+            return
+
+        # Calcular posiciones de todos los nodos
+        posiciones = self.calcular_posiciones_nodos(arbol_avl)
+        
+        # Dibujar conexiones primero (para que queden detrás de los nodos)
+        self._dibujar_conexiones(screen, arbol_avl.raiz, posiciones, x_offset, y_offset)
+        
+        # Dibujar nodos
+        self._dibujar_nodos(screen, arbol_avl.raiz, posiciones, x_offset, y_offset)
 
     def _dibujar_nodo_recursivo(self, screen, nodo, x, y, nivel, x_offset, y_offset):
         """
@@ -75,7 +92,20 @@ class VisualizadorArbol:
             seleccionado (bool): Si el nodo está seleccionado
             en_recorrido (bool): Si el nodo está siendo recorrido
         """
-        pass
+        # Determinar color del nodo
+        if seleccionado:
+            color = self.color_nodo_seleccionado
+        elif en_recorrido:
+            color = self.color_recorrido
+        else:
+            color = self.color_nodo
+        
+        # Dibujar círculo del nodo
+        screen.draw.filled_circle((x, y), self.radio_nodo, color)
+        screen.draw.circle((x, y), self.radio_nodo, (255, 255, 255))  # Borde blanco
+        
+        # Dibujar texto del nodo
+        self.dibujar_texto_nodo(screen, nodo, x, y)
 
     def dibujar_conexion(self, screen, x1, y1, x2, y2):
         """
@@ -97,7 +127,17 @@ class VisualizadorArbol:
             nodo: Nodo con la información a mostrar
             x, y (int): Posición del texto
         """
-        pass
+        # Obtener coordenadas del obstáculo
+        obstaculo = nodo.obstaculo
+        texto = f"({obstaculo.x},{obstaculo.y})"
+        
+        # Dibujar texto centrado en el nodo
+        screen.draw.text(
+            texto,
+            (x - 20, y - 8),
+            fontsize=12,
+            color=self.color_texto
+        )
 
     def calcular_posiciones_nodos(self, arbol_avl):
         """
@@ -109,19 +149,89 @@ class VisualizadorArbol:
         Returns:
             dict: Diccionario con nodo como clave y (x, y) como valor
         """
-        pass
+        posiciones = {}
+        if arbol_avl.raiz is None:
+            return posiciones
+        
+        # Calcular altura del árbol
+        altura = self._calcular_altura(arbol_avl.raiz)
+        
+        # Calcular posiciones recursivamente
+        self._calcular_posicion_recursiva(arbol_avl.raiz, 0, 0, posiciones, altura)
+        
+        return posiciones
+    
+    def _calcular_altura(self, nodo):
+        """Calcula la altura de un nodo."""
+        if nodo is None:
+            return 0
+        return 1 + max(self._calcular_altura(nodo.izquierdo), self._calcular_altura(nodo.derecho))
+    
+    def _calcular_posicion_recursiva(self, nodo, nivel, indice, posiciones, altura_total):
+        """Calcula recursivamente la posición de cada nodo."""
+        if nodo is None:
+            return
+        
+        # Calcular posición X basada en el índice en el nivel
+        nodos_en_nivel = 2 ** nivel
+        ancho_nivel = self.ancho - 100  # Margen
+        x = 50 + (indice * ancho_nivel) // nodos_en_nivel + (ancho_nivel // nodos_en_nivel) // 2
+        
+        # Calcular posición Y basada en el nivel
+        y = 50 + nivel * self.espaciado_nivel
+        
+        posiciones[nodo] = (x, y)
+        
+        # Calcular posiciones de los hijos
+        if nodo.izquierdo is not None:
+            self._calcular_posicion_recursiva(nodo.izquierdo, nivel + 1, indice * 2, posiciones, altura_total)
+        if nodo.derecho is not None:
+            self._calcular_posicion_recursiva(nodo.derecho, nivel + 1, indice * 2 + 1, posiciones, altura_total)
 
-    def _calcular_posicion_recursiva(self, nodo, nivel, indice, posiciones):
-        """
-        Calcula recursivamente la posición de cada nodo.
-
-        Args:
-            nodo: Nodo actual
-            nivel (int): Nivel en el árbol
-            indice (int): Índice del nodo en su nivel
-            posiciones (dict): Diccionario donde guardar las posiciones
-        """
-        pass
+    def _dibujar_conexiones(self, screen, nodo, posiciones, x_offset, y_offset):
+        """Dibuja las conexiones entre nodos."""
+        if nodo is None:
+            return
+        
+        nodo_x, nodo_y = posiciones[nodo]
+        
+        # Dibujar conexión al hijo izquierdo
+        if nodo.izquierdo is not None:
+            hijo_x, hijo_y = posiciones[nodo.izquierdo]
+            screen.draw.line(
+                (x_offset + nodo_x, y_offset + nodo_y),
+                (x_offset + hijo_x, y_offset + hijo_y),
+                self.color_conexion
+            )
+            self._dibujar_conexiones(screen, nodo.izquierdo, posiciones, x_offset, y_offset)
+        
+        # Dibujar conexión al hijo derecho
+        if nodo.derecho is not None:
+            hijo_x, hijo_y = posiciones[nodo.derecho]
+            screen.draw.line(
+                (x_offset + nodo_x, y_offset + nodo_y),
+                (x_offset + hijo_x, y_offset + hijo_y),
+                self.color_conexion
+            )
+            self._dibujar_conexiones(screen, nodo.derecho, posiciones, x_offset, y_offset)
+    
+    def _dibujar_nodos(self, screen, nodo, posiciones, x_offset, y_offset):
+        """Dibuja todos los nodos del árbol."""
+        if nodo is None:
+            return
+        
+        nodo_x, nodo_y = posiciones[nodo]
+        
+        # Determinar si el nodo está en el recorrido actual
+        en_recorrido = nodo in self.recorrido_actual
+        seleccionado = nodo == self.nodo_seleccionado
+        
+        # Dibujar el nodo
+        self.dibujar_nodo(screen, nodo, x_offset + nodo_x, y_offset + nodo_y, seleccionado, en_recorrido)
+        
+        # Dibujar nodos hijos recursivamente
+        self._dibujar_nodos(screen, nodo.izquierdo, posiciones, x_offset, y_offset)
+        self._dibujar_nodos(screen, nodo.derecho, posiciones, x_offset, y_offset)
 
     def obtener_nodo_en_posicion(self, arbol_avl, x, y):
         """
@@ -134,7 +244,18 @@ class VisualizadorArbol:
         Returns:
             Optional: Nodo en esa posición o None
         """
-        pass
+        if arbol_avl.raiz is None:
+            return None
+        
+        posiciones = self.calcular_posiciones_nodos(arbol_avl)
+        
+        # Buscar el nodo más cercano al punto
+        for nodo, (nodo_x, nodo_y) in posiciones.items():
+            distancia = ((x - nodo_x) ** 2 + (y - nodo_y) ** 2) ** 0.5
+            if distancia <= self.radio_nodo:
+                return nodo
+        
+        return None
 
     def iniciar_animacion_recorrido(self, recorrido):
         """
@@ -143,7 +264,9 @@ class VisualizadorArbol:
         Args:
             recorrido (List): Lista de nodos en orden de recorrido
         """
-        pass
+        self.recorrido_actual = recorrido
+        self.paso_recorrido_actual = 0
+        self.animando_recorrido = True
 
     def actualizar_animacion_recorrido(self):
         """
@@ -182,13 +305,15 @@ class VisualizadorArbol:
         Args:
             nodo: Nodo a seleccionar (None para deseleccionar)
         """
-        pass
+        self.nodo_seleccionado = nodo
 
     def limpiar_seleccion(self):
         """
         Limpia la selección actual.
         """
-        pass
+        self.nodo_seleccionado = None
+        self.recorrido_actual = []
+        self.animando_recorrido = False
 
     def obtener_dimensiones_arbol(self, arbol_avl):
         """

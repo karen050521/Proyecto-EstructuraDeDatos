@@ -49,7 +49,11 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        self.dibujar_fondo(screen)
+        self.dibujar_carretera(screen)
+        self.dibujar_obstaculos(screen)
+        self.dibujar_carrito(screen)
+        self.dibujar_hud(screen)
 
     def dibujar_fondo(self, screen):
         """
@@ -58,7 +62,8 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        # Fondo azul cielo
+        screen.draw.filled_rect(pygame.Rect(0, 0, self.ancho, self.y_carretera), (135, 206, 235))
 
     def dibujar_carretera(self, screen):
         """
@@ -67,7 +72,22 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        # Carretera principal (gris)
+        screen.draw.filled_rect(
+            pygame.Rect(0, self.y_carretera, self.ancho, self.alto_carretera),
+            (100, 100, 100)
+        )
+        
+        # Líneas divisorias de carriles
+        for i, y_carril in enumerate(self.carriles):
+            if i < len(self.carriles) - 1:
+                # Línea blanca discontinua
+                for x in range(0, self.ancho, 20):
+                    screen.draw.line(
+                        (x, y_carril + 50),
+                        (x + 10, y_carril + 50),
+                        (255, 255, 255)
+                    )
 
     def dibujar_carrito(self, screen):
         """
@@ -76,7 +96,39 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        if not self.gestor_juego or not self.gestor_juego.carrito:
+            return
+        
+        carrito = self.gestor_juego.carrito
+        
+        # Calcular posición en pantalla
+        x_pantalla = self.posicion_carrito_pantalla
+        y_pantalla = self.carriles[carrito.y] - 15  # Centrar en el carril
+        
+        # Ajustar por salto
+        if carrito.esta_saltando():
+            # Calcular altura del salto
+            progreso = carrito.tiempo_salto / carrito.duracion_salto
+            altura_salto = int(carrito.altura_salto * 4 * progreso * (1 - progreso))
+            y_pantalla -= altura_salto
+        
+        # Color del carrito según estado
+        if carrito.estado.value == "saltando":
+            color = (255, 255, 0)  # Amarillo
+        elif carrito.estado.value == "colisionando":
+            color = (255, 0, 0)    # Rojo
+        else:
+            color = (0, 100, 255)  # Azul
+        
+        # Dibujar carrito como rectángulo
+        screen.draw.filled_rect(
+            pygame.Rect(x_pantalla, y_pantalla, carrito.ancho, carrito.alto),
+            color
+        )
+        screen.draw.rect(
+            pygame.Rect(x_pantalla, y_pantalla, carrito.ancho, carrito.alto),
+            (255, 255, 255)
+        )
 
     def dibujar_obstaculos(self, screen):
         """
@@ -85,17 +137,58 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        if not self.gestor_juego or not self.gestor_juego.carrito:
+            return
+        
+        carrito = self.gestor_juego.carrito
+        
+        # Dibujar obstáculos visibles
+        for obstaculo in self.gestor_juego.obstaculos_visibles:
+            # Calcular posición en pantalla
+            x_pantalla = obstaculo.x - carrito.x + self.posicion_carrito_pantalla
+            y_pantalla = self.carriles[obstaculo.y] - 15
+            
+            # Solo dibujar si está en pantalla
+            if -50 <= x_pantalla <= self.ancho + 50:
+                self.dibujar_obstaculo(screen, obstaculo, x_pantalla, y_pantalla)
 
-    def dibujar_obstaculo(self, screen, obstaculo):
+    def dibujar_obstaculo(self, screen, obstaculo, x, y):
         """
         Dibuja un obstáculo individual.
 
         Args:
             screen: Superficie de pygame donde dibujar
             obstaculo: Obstáculo a dibujar
+            x, y: Posición en pantalla
         """
-        pass
+        # Color según tipo de obstáculo
+        colores = {
+            "roca": (139, 69, 19),      # Marrón
+            "cono": (255, 165, 0),      # Naranja
+            "hueco": (0, 0, 0),         # Negro
+            "aceite": (105, 105, 105),  # Gris oscuro
+            "barrera": (255, 0, 0)      # Rojo
+        }
+        
+        color = colores.get(obstaculo.tipo.value, (128, 128, 128))
+        
+        # Dibujar obstáculo como rectángulo
+        screen.draw.filled_rect(
+            pygame.Rect(x, y, obstaculo.ancho, obstaculo.alto),
+            color
+        )
+        screen.draw.rect(
+            pygame.Rect(x, y, obstaculo.ancho, obstaculo.alto),
+            (255, 255, 255)
+        )
+        
+        # Dibujar tipo de obstáculo como texto
+        screen.draw.text(
+            obstaculo.tipo.value[:3].upper(),
+            (x + 2, y + 2),
+            fontsize=8,
+            color="white"
+        )
 
     def dibujar_hud(self, screen):
         """
@@ -104,7 +197,23 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        if not self.gestor_juego or not self.gestor_juego.carrito:
+            return
+        
+        # Fondo del HUD
+        screen.draw.filled_rect(
+            pygame.Rect(0, 0, self.ancho, self.alto_hud),
+            (0, 0, 0, 128)  # Negro semi-transparente
+        )
+        
+        # Barra de energía
+        self.dibujar_barra_energia(screen)
+        
+        # Información del juego
+        self.dibujar_informacion_juego(screen)
+        
+        # Controles disponibles
+        self.dibujar_controles_disponibles(screen)
 
     def dibujar_barra_energia(self, screen):
         """
@@ -113,7 +222,31 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        carrito = self.gestor_juego.carrito
+        porcentaje = carrito.obtener_porcentaje_energia()
+        
+        # Fondo de la barra
+        screen.draw.filled_rect(
+            pygame.Rect(10, 10, 200, 20),
+            (50, 50, 50)
+        )
+        
+        # Barra de energía
+        ancho_energia = int(200 * porcentaje)
+        color_energia = (0, 255, 0) if porcentaje > 0.5 else (255, 255, 0) if porcentaje > 0.2 else (255, 0, 0)
+        
+        screen.draw.filled_rect(
+            pygame.Rect(10, 10, ancho_energia, 20),
+            color_energia
+        )
+        
+        # Texto de energía
+        screen.draw.text(
+            f"Energia: {int(porcentaje * 100)}%",
+            (220, 12),
+            fontsize=14,
+            color="white"
+        )
 
     def dibujar_informacion_juego(self, screen):
         """
@@ -122,7 +255,31 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        stats = self.gestor_juego.obtener_estadisticas()
+        
+        # Distancia recorrida
+        screen.draw.text(
+            f"Distancia: {stats['distancia_recorrida']}/{stats['distancia_total']}m",
+            (10, 40),
+            fontsize=12,
+            color="white"
+        )
+        
+        # Puntuación
+        screen.draw.text(
+            f"Puntuacion: {stats['puntuacion']}",
+            (10, 55),
+            fontsize=12,
+            color="white"
+        )
+        
+        # Obstáculos visibles
+        screen.draw.text(
+            f"Obstaculos visibles: {stats['obstaculos_visibles']}",
+            (300, 12),
+            fontsize=12,
+            color="white"
+        )
 
     def dibujar_controles_disponibles(self, screen):
         """
@@ -131,7 +288,37 @@ class PantallaJuego:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        # Controles en la esquina inferior derecha
+        x = self.ancho - 200
+        y = self.alto - 80
+        
+        screen.draw.text(
+            "Controles:",
+            (x, y),
+            fontsize=12,
+            color="white"
+        )
+        
+        screen.draw.text(
+            "↑↓ Mover carril",
+            (x, y + 15),
+            fontsize=10,
+            color="white"
+        )
+        
+        screen.draw.text(
+            "ESPACIO Saltar",
+            (x, y + 30),
+            fontsize=10,
+            color="white"
+        )
+        
+        screen.draw.text(
+            "P Pausar",
+            (x, y + 45),
+            fontsize=10,
+            color="white"
+        )
 
     def dibujar_ventana_arbol(self, screen):
         """

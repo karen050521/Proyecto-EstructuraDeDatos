@@ -4,6 +4,7 @@ Responsabilidad: Interfaz para administrar obstáculos antes de iniciar el juego
 """
 
 import pygame
+from pygame.locals import *
 from typing import Optional, Tuple
 
 
@@ -39,6 +40,13 @@ class PantallaConfiguracion:
         self.campo_y = ""
         self.tipo_seleccionado = "roca"
         self.campo_activo = None
+        
+        # Visualizador del árbol
+        from .visualizador_arbol import VisualizadorArbol
+        self.visualizador = VisualizadorArbol(400, 400)
+        
+        # Tipos de obstáculos disponibles
+        self.tipos_obstaculos = ["roca", "cono", "hueco", "aceite", "barrera"]
 
     def dibujar(self, screen):
         """
@@ -47,7 +55,9 @@ class PantallaConfiguracion:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        self.dibujar_fondo(screen)
+        self.dibujar_arbol(screen)
+        self.dibujar_controles(screen)
 
     def dibujar_fondo(self, screen):
         """
@@ -56,7 +66,32 @@ class PantallaConfiguracion:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        # Título
+        screen.draw.text(
+            "CONFIGURACION DEL JUEGO",
+            (self.ancho // 2 - 150, 20),
+            fontsize=24,
+            color="white"
+        )
+        
+        # Dibujar áreas
+        screen.draw.rect(self.area_arbol, (100, 100, 100))
+        screen.draw.rect(self.area_controles, (80, 80, 80))
+        
+        # Etiquetas de áreas
+        screen.draw.text(
+            "Vista del Arbol AVL",
+            (self.area_arbol.x + 10, self.area_arbol.y - 25),
+            fontsize=16,
+            color="white"
+        )
+        
+        screen.draw.text(
+            "Controles",
+            (self.area_controles.x + 10, self.area_controles.y - 25),
+            fontsize=16,
+            color="white"
+        )
 
     def dibujar_arbol(self, screen):
         """
@@ -65,7 +100,13 @@ class PantallaConfiguracion:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        if self.gestor_juego and self.gestor_juego.arbol_obstaculos:
+            self.visualizador.dibujar_arbol(
+                screen, 
+                self.gestor_juego.arbol_obstaculos,
+                self.area_arbol.x,
+                self.area_arbol.y
+            )
 
     def dibujar_nodo(self, screen, nodo, x, y, nivel):
         """
@@ -87,7 +128,49 @@ class PantallaConfiguracion:
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        x = self.area_controles.x + 10
+        y = self.area_controles.y + 20
+        
+        # Título de controles
+        screen.draw.text(
+            "Agregar Obstaculo:",
+            (x, y),
+            fontsize=14,
+            color="white"
+        )
+        y += 30
+        
+        # Campo X
+        screen.draw.text("X:", (x, y), fontsize=12, color="white")
+        self.dibujar_campo_texto(screen, self.campo_x, x + 30, y - 5, 60, self.campo_activo == "x")
+        y += 30
+        
+        # Campo Y
+        screen.draw.text("Y:", (x, y), fontsize=12, color="white")
+        self.dibujar_campo_texto(screen, self.campo_y, x + 30, y - 5, 60, self.campo_activo == "y")
+        y += 30
+        
+        # Tipo de obstáculo
+        screen.draw.text("Tipo:", (x, y), fontsize=12, color="white")
+        self.dibujar_boton(screen, self.tipo_seleccionado, x + 50, y - 5, 80, 20)
+        y += 40
+        
+        # Botón agregar
+        self.dibujar_boton(screen, "AGREGAR", x, y, 100, 30)
+        y += 50
+        
+        # Botones de recorrido
+        screen.draw.text("Recorridos:", (x, y), fontsize=14, color="white")
+        y += 25
+        
+        self.dibujar_boton(screen, "RECORRIDO ANCHURA", x, y, 150, 25)
+        y += 35
+        
+        self.dibujar_boton(screen, "RECORRIDO PROFUNDIDAD", x, y, 150, 25)
+        y += 50
+        
+        # Botón iniciar juego
+        self.dibujar_boton(screen, "INICIAR JUEGO", x, y, 120, 35)
 
     def dibujar_campo_texto(self, screen, texto, x, y, ancho, activo):
         """
@@ -100,7 +183,9 @@ class PantallaConfiguracion:
             ancho (int): Ancho del campo
             activo (bool): Si el campo está activo
         """
-        pass
+        color = (255, 255, 255) if activo else (200, 200, 200)
+        screen.draw.rect(pygame.Rect(x, y, ancho, 20), color)
+        screen.draw.text(texto, (x + 5, y + 2), fontsize=12, color="black")
 
     def dibujar_boton(self, screen, texto, x, y, ancho, alto, activo=True):
         """
@@ -113,7 +198,14 @@ class PantallaConfiguracion:
             ancho, alto (int): Dimensiones del botón
             activo (bool): Si el botón está habilitado
         """
-        pass
+        color = (100, 150, 255) if activo else (100, 100, 100)
+        screen.draw.filled_rect(pygame.Rect(x, y, ancho, alto), color)
+        screen.draw.rect(pygame.Rect(x, y, ancho, alto), (255, 255, 255))
+        
+        # Centrar texto
+        texto_x = x + (ancho - len(texto) * 6) // 2
+        texto_y = y + (alto - 12) // 2
+        screen.draw.text(texto, (texto_x, texto_y), fontsize=10, color="white")
 
     def dibujar_recorrido(self, screen):
         """
@@ -146,16 +238,96 @@ class PantallaConfiguracion:
         Returns:
             str: Acción a realizar o None
         """
-        pass
+        x, y = pos
+        
+        # Verificar clic en área del árbol
+        if self.area_arbol.collidepoint(x, y):
+            # Buscar nodo en esa posición
+            nodo = self.visualizador.obtener_nodo_en_posicion(
+                self.gestor_juego.arbol_obstaculos,
+                x - self.area_arbol.x,
+                y - self.area_arbol.y
+            )
+            if nodo:
+                self.visualizador.establecer_nodo_seleccionado(nodo)
+                return "seleccionar_nodo"
+        
+        # Verificar clic en controles
+        if self.area_controles.collidepoint(x, y):
+            return self._manejar_clic_controles(x, y)
+        
+        return None
+    
+    def _manejar_clic_controles(self, x, y):
+        """Maneja clics en el área de controles."""
+        # Coordenadas relativas al área de controles
+        rel_x = x - self.area_controles.x
+        rel_y = y - self.area_controles.y
+        
+        # Botón agregar (aproximado)
+        if 10 <= rel_x <= 110 and 120 <= rel_y <= 150:
+            return "agregar_obstaculo"
+        
+        # Botón recorrido anchura
+        if 10 <= rel_x <= 160 and 200 <= rel_y <= 225:
+            return "recorrido_anchura"
+        
+        # Botón recorrido profundidad
+        if 10 <= rel_x <= 160 and 235 <= rel_y <= 260:
+            return "recorrido_profundidad"
+        
+        # Botón iniciar juego
+        if 10 <= rel_x <= 130 and 285 <= rel_y <= 320:
+            return "iniciar_juego"
+        
+        # Campo X
+        if 40 <= rel_x <= 100 and 45 <= rel_y <= 65:
+            self.campo_activo = "x"
+            return "activar_campo_x"
+        
+        # Campo Y
+        if 40 <= rel_x <= 100 and 75 <= rel_y <= 95:
+            self.campo_activo = "y"
+            return "activar_campo_y"
+        
+        return None
 
     def manejar_tecla(self, tecla):
         """
         Maneja las teclas presionadas.
 
         Args:
-            tecla: Tecla presionada
+            tecla: Tecla presionada (en pygame-zero es un objeto con propiedades)
         """
-        pass
+        # Usar strings directamente para las teclas en pygame-zero
+        # Manejar entrada de texto en campos activos
+        if self.campo_activo:
+            if tecla == "backspace":
+                if self.campo_activo == "x" and self.campo_x:
+                    self.campo_x = self.campo_x[:-1]
+                elif self.campo_activo == "y" and self.campo_y:
+                    self.campo_y = self.campo_y[:-1]
+            elif tecla == "return":
+                if self.campo_activo == "x":
+                    self.campo_activo = "y"
+                elif self.campo_activo == "y":
+                    self.agregar_obstaculo()
+                    self.campo_activo = None
+            elif tecla == "escape":
+                self.campo_activo = None
+            else:
+                # Agregar dígito - en pygame-zero, las teclas numéricas son caracteres
+                if hasattr(tecla, 'name') and tecla.name.isdigit():
+                    if self.campo_activo == "x":
+                        self.campo_x += tecla.name
+                    elif self.campo_activo == "y":
+                        self.campo_y += tecla.name
+        
+        # Teclas especiales
+        if tecla == "enter":
+            return "iniciar_juego"
+        
+        return None
 
     def agregar_obstaculo(self):
         """
@@ -164,7 +336,32 @@ class PantallaConfiguracion:
         Returns:
             bool: True si se agregó correctamente
         """
-        pass
+        if not self.gestor_juego:
+            return False
+        
+        # Validar entrada
+        try:
+            x = int(self.campo_x)
+            y = int(self.campo_y)
+        except ValueError:
+            return False
+        
+        # Validar rango de Y (carriles 0-2)
+        if y < 0 or y > 2:
+            return False
+        
+        # Crear obstáculo
+        from logic.obstaculo import TipoObstaculo
+        tipo = TipoObstaculo(self.tipo_seleccionado)
+        
+        # Intentar agregar al árbol
+        if self.gestor_juego.agregar_obstaculo(x, y, tipo):
+            # Limpiar campos
+            self.campo_x = ""
+            self.campo_y = ""
+            return True
+        
+        return False
 
     def eliminar_obstaculo_seleccionado(self):
         """
@@ -179,19 +376,29 @@ class PantallaConfiguracion:
         """
         Activa la visualización del recorrido en anchura.
         """
-        pass
+        if self.gestor_juego:
+            recorrido = self.gestor_juego.obtener_recorrido_anchura()
+            self.visualizador.iniciar_animacion_recorrido(recorrido)
+            self.mostrando_recorrido = True
+            self.tipo_recorrido_actual = "anchura"
 
     def mostrar_recorrido_profundidad(self):
         """
         Activa la visualización del recorrido en profundidad.
         """
-        pass
+        if self.gestor_juego:
+            recorrido = self.gestor_juego.obtener_recorrido_profundidad()
+            self.visualizador.iniciar_animacion_recorrido(recorrido)
+            self.mostrando_recorrido = True
+            self.tipo_recorrido_actual = "profundidad"
 
     def limpiar_recorrido(self):
         """
         Limpia la visualización de recorridos.
         """
-        pass
+        self.visualizador.limpiar_seleccion()
+        self.mostrando_recorrido = False
+        self.tipo_recorrido_actual = None
 
     def validar_entrada_obstaculo(self, x, y):
         """

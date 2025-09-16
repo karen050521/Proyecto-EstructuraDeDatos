@@ -37,6 +37,9 @@ def inicializar_juego():
     pantalla_juego = PantallaJuego(WIDTH, HEIGHT)
     pantalla_juego.gestor_juego = gestor_juego
 
+    # Cambiar directamente a configuracion
+    gestor_juego.cambiar_estado(EstadoJuego.CONFIGURACION)
+
     print("Juego inicializado correctamente")
     print("Estado inicial: Configuracion")
     print("Arbol AVL listo para recibir obstaculos")
