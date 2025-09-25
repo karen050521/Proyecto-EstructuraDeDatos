@@ -14,6 +14,10 @@ WIDTH = 800
 HEIGHT = 600
 TITLE = "Carrito con Obstaculos Dinamicos - Arbol AVL"
 
+# Centrar la ventana
+import os
+os.environ['SDL_VIDEO_CENTERED'] = '1'
+
 # Instancias globales para pygame-zero
 gestor_juego = None
 pantalla_configuracion = None

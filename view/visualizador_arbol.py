@@ -172,10 +172,14 @@ class VisualizadorArbol:
         if nodo is None:
             return
         
+        # Usar un algoritmo más simple para posicionamiento
         # Calcular posición X basada en el índice en el nivel
         nodos_en_nivel = 2 ** nivel
-        ancho_nivel = self.ancho - 100  # Margen
-        x = 50 + (indice * ancho_nivel) // nodos_en_nivel + (ancho_nivel // nodos_en_nivel) // 2
+        if nodos_en_nivel > 0:
+            ancho_nivel = self.ancho - 100  # Margen
+            x = 50 + (indice * ancho_nivel) // nodos_en_nivel + (ancho_nivel // nodos_en_nivel) // 2
+        else:
+            x = self.ancho // 2
         
         # Calcular posición Y basada en el nivel
         y = 50 + nivel * self.espaciado_nivel
@@ -223,7 +227,14 @@ class VisualizadorArbol:
         nodo_x, nodo_y = posiciones[nodo]
         
         # Determinar si el nodo está en el recorrido actual
-        en_recorrido = nodo in self.recorrido_actual
+        # Comparar por coordenadas del obstáculo
+        en_recorrido = False
+        if self.recorrido_actual:
+            for obstaculo in self.recorrido_actual:
+                if (nodo.obstaculo.x == obstaculo.x and nodo.obstaculo.y == obstaculo.y):
+                    en_recorrido = True
+                    break
+        
         seleccionado = nodo == self.nodo_seleccionado
         
         # Dibujar el nodo
@@ -262,8 +273,9 @@ class VisualizadorArbol:
         Inicia la animación de un recorrido del árbol.
 
         Args:
-            recorrido (List): Lista de nodos en orden de recorrido
+            recorrido (List): Lista de obstáculos en orden de recorrido
         """
+        print(f"Iniciando animación con {len(recorrido)} obstáculos")
         self.recorrido_actual = recorrido
         self.paso_recorrido_actual = 0
         self.animando_recorrido = True

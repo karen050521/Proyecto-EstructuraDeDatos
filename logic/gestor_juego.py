@@ -77,10 +77,15 @@ class GestorJuego:
 
                 # Cargar obstáculos predefinidos
                 obstaculos_config = config.get("obstaculos", [])
+                print(f"Cargando {len(obstaculos_config)} obstáculos desde configuración...")
                 for obs_data in obstaculos_config:
                     obstaculo = self._crear_obstaculo_desde_dict(obs_data)
-                    self.arbol_obstaculos.insertar(obstaculo)
+                    if self.arbol_obstaculos.insertar(obstaculo):
+                        print(f"Obstáculo cargado: ({obstaculo.x}, {obstaculo.y}) tipo {obstaculo.tipo.value}")
+                    else:
+                        print(f"Error cargando obstáculo: ({obstaculo.x}, {obstaculo.y})")
 
+                print(f"Total de obstáculos en el árbol: {self.arbol_obstaculos.obtener_total_obstaculos()}")
                 return True
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
             print(f"Error cargando configuración: {e}")
