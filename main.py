@@ -4,6 +4,7 @@ Punto de entrada principal del juego de carrito con obstaculos dinamicos.
 Configurado para ejecutarse con pygame-zero.
 """
 
+
 import pygame
 from logic.gestor_juego import GestorJuego, EstadoJuego
 from view.pantalla_configuracion import PantallaConfiguracion
