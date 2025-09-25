@@ -1,0 +1,174 @@
+# -*- coding: utf-8 -*-
+"""
+Punto de entrada principal del juego de carrito con obstaculos dinamicos.
+Configurado para ejecutarse con pygame-zero.
+"""
+
+
+import pygame
+from logic.gestor_juego import GestorJuego, EstadoJuego
+from view.pantalla_configuracion import PantallaConfiguracion
+from view.pantalla_juego import PantallaJuego
+
+# Configuración de pygame-zero
+WIDTH = 800
+HEIGHT = 600
+TITLE = "Carrito con Obstaculos Dinamicos - Arbol AVL"
+
+# Centrar la ventana
+import os
+os.environ['SDL_VIDEO_CENTERED'] = '1'
+
+# Instancias globales para pygame-zero
+gestor_juego = None
+pantalla_configuracion = None
+pantalla_juego = None
+
+
+def inicializar_juego():
+    """
+    Inicializa todos los componentes del juego.
+    """
+    global gestor_juego, pantalla_configuracion, pantalla_juego
+
+    # Crear el gestor principal
+    gestor_juego = GestorJuego()
+    gestor_juego.cargar_configuracion()
+
+    # Crear las pantallas
+    pantalla_configuracion = PantallaConfiguracion(WIDTH, HEIGHT)
+    pantalla_configuracion.gestor_juego = gestor_juego
+
+    pantalla_juego = PantallaJuego(WIDTH, HEIGHT)
+    pantalla_juego.gestor_juego = gestor_juego
+
+    # Cambiar directamente a configuracion
+    gestor_juego.cambiar_estado(EstadoJuego.CONFIGURACION)
+
+    print("Juego inicializado correctamente")
+    print("Estado inicial: Configuracion")
+    print("Arbol AVL listo para recibir obstaculos")
+
+
+def draw():
+    """
+    Función de dibujo principal llamada por pygame-zero.
+    """
+    if gestor_juego is None:
+        inicializar_juego()
+        return
+
+    # Limpiar pantalla
+    screen.fill((50, 50, 100))  # Azul oscuro
+
+    # Dibujar según el estado actual
+    if gestor_juego.estado_actual == EstadoJuego.CONFIGURACION:
+        pantalla_configuracion.dibujar(screen)
+    elif gestor_juego.estado_actual == EstadoJuego.JUGANDO:
+        pantalla_juego.dibujar(screen)
+    elif gestor_juego.estado_actual == EstadoJuego.PAUSADO:
+        pantalla_juego.dibujar(screen)
+        # TODO: Dibujar overlay de pausa
+    elif gestor_juego.estado_actual == EstadoJuego.JUEGO_TERMINADO:
+        pantalla_juego.dibujar(screen)
+        # TODO: Dibujar pantalla de fin de juego
+
+    # Dibujar información de debug (temporal)
+    screen.draw.text(
+        f"Estado: {gestor_juego.estado_actual.value}",
+        (10, 10),
+        fontsize=20,
+        color="white",
+    )
+
+    if gestor_juego.arbol_obstaculos:
+        screen.draw.text(
+            f"Obstáculos en árbol: {gestor_juego.arbol_obstaculos.obtener_total_obstaculos()}",
+            (10, 35),
+            fontsize=16,
+            color="white",
+        )
+
+
+def update(dt):
+    """
+    Función de actualización llamada por pygame-zero.
+
+    Args:
+        dt (float): Delta time desde el último frame
+    """
+    if gestor_juego is None:
+        return
+
+    # Actualizar el gestor principal
+    gestor_juego.actualizar(dt)
+
+
+def on_key_down(key):
+    """
+    Maneja las teclas presionadas.
+
+    Args:
+        key: Tecla presionada
+    """
+    if gestor_juego is None:
+        return
+
+    # Teclas globales
+    if key == keys.ESCAPE:
+        # Cambiar entre configuración y juego
+        if gestor_juego.estado_actual == EstadoJuego.CONFIGURACION:
+            print("Saliendo del juego...")
+            exit()
+        else:
+            gestor_juego.cambiar_estado(EstadoJuego.CONFIGURACION)
+
+    # Delegar a la pantalla actual
+    if gestor_juego.estado_actual == EstadoJuego.CONFIGURACION:
+        resultado = pantalla_configuracion.manejar_tecla(key)
+        if resultado == "iniciar_juego":
+            gestor_juego.cambiar_estado(EstadoJuego.JUGANDO)
+            gestor_juego.inicializar_juego()
+
+    elif gestor_juego.estado_actual == EstadoJuego.JUGANDO:
+        # Controles del juego
+        if key == keys.UP:
+            gestor_juego.carrito.mover_arriba()
+        elif key == keys.DOWN:
+            gestor_juego.carrito.mover_abajo()
+        elif key == keys.SPACE:
+            gestor_juego.carrito.saltar()
+        elif key == keys.P:
+            gestor_juego.pausar_juego()
+
+
+def on_mouse_down(pos):
+    """
+    Maneja los clics del mouse.
+
+    Args:
+        pos: Posición del clic
+    """
+    if gestor_juego is None:
+        return
+
+    # Delegar a la pantalla actual
+    if gestor_juego.estado_actual == EstadoJuego.CONFIGURACION:
+        resultado = pantalla_configuracion.manejar_clic_mouse(pos)
+        if resultado == "iniciar_juego":
+            gestor_juego.cambiar_estado(EstadoJuego.JUGANDO)
+            gestor_juego.inicializar_juego()
+
+
+def main():
+    """
+    Función principal para ejecutar sin pygame-zero.
+    """
+    print("Iniciando Juego de Carrito con Obstaculos Dinamicos")
+    print("Estructura de datos: Arbol AVL")
+    print("Para ejecutar: uv run pgzrun main.py")
+    print("O alternativamente: uv run python main.py")
+
+
+if __name__ == "__main__":
+    main()

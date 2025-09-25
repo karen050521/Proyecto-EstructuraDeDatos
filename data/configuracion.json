@@ -1,0 +1,21 @@
+{
+    "configuracion": {
+        "distancia_total": 2000,
+        "velocidad_carrito": 10,
+        "refresco_ms": 200,
+        "altura_salto": 50,
+        "color_carrito_inicial": "azul"
+    },
+    "obstaculos": [
+        { "x": 150, "y": 0, "tipo": "roca" },
+        { "x": 320, "y": 1, "tipo": "cono" },
+        { "x": 500, "y": 2, "tipo": "hueco" },
+        { "x": 750, "y": 0, "tipo": "aceite" },
+        { "x": 900, "y": 1, "tipo": "barrera" },
+        { "x": 1100, "y": 2, "tipo": "roca" },
+        { "x": 1300, "y": 0, "tipo": "cono" },
+        { "x": 1500, "y": 1, "tipo": "hueco" },
+        { "x": 1700, "y": 2, "tipo": "aceite" },
+        { "x": 1850, "y": 0, "tipo": "barrera" }
+    ]
+}
