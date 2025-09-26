@@ -39,8 +39,13 @@ class PantallaJuego:
 
         # HUD
         self.alto_hud = 80
-        self.mostrar_arbol = False
-        self.ventana_arbol = None
+        self.mostrar_arbol = True  # Activar visualización del árbol por defecto
+        self.mostrar_hitbox = False
+        self.visualizador_arbol = None
+        
+        # Inicializar visualizador del árbol
+        from view.visualizador_arbol import VisualizadorArbol
+        self.visualizador_arbol = VisualizadorArbol(ancho=400, alto=400)
 
     def dibujar(self, screen):
         """
@@ -54,6 +59,10 @@ class PantallaJuego:
         self.dibujar_obstaculos(screen)
         self.dibujar_carrito(screen)
         self.dibujar_hud(screen)
+        
+        # Dibujar árbol AVL si está habilitado
+        if self.mostrar_arbol and self.gestor_juego:
+            self.dibujar_visualizacion_arbol(screen)
 
     def dibujar_fondo(self, screen):
         """
@@ -121,14 +130,19 @@ class PantallaJuego:
             color = (0, 100, 255)  # Azul
         
         # Dibujar carrito como rectángulo
-        screen.draw.filled_rect(
-            pygame.Rect(x_pantalla, y_pantalla, carrito.ancho, carrito.alto),
-            color
-        )
-        screen.draw.rect(
-            pygame.Rect(x_pantalla, y_pantalla, carrito.ancho, carrito.alto),
-            (255, 255, 255)
-        )
+        rect_carrito = pygame.Rect(x_pantalla, y_pantalla, carrito.ancho, carrito.alto)
+        screen.draw.filled_rect(rect_carrito, color)
+        screen.draw.rect(rect_carrito, (255, 255, 255))
+        
+        # Dibujar hitbox en modo debug
+        if self.mostrar_hitbox:
+            screen.draw.rect(rect_carrito, (255, 0, 0), 1)
+            screen.draw.text(
+                "HITBOX",
+                (x_pantalla, y_pantalla - 15),
+                fontsize=10,
+                color="red"
+            )
 
     def dibujar_obstaculos(self, screen):
         """
@@ -173,14 +187,13 @@ class PantallaJuego:
         color = colores.get(obstaculo.tipo.value, (128, 128, 128))
         
         # Dibujar obstáculo como rectángulo
-        screen.draw.filled_rect(
-            pygame.Rect(x, y, obstaculo.ancho, obstaculo.alto),
-            color
-        )
-        screen.draw.rect(
-            pygame.Rect(x, y, obstaculo.ancho, obstaculo.alto),
-            (255, 255, 255)
-        )
+        rect_obstaculo = pygame.Rect(x, y, obstaculo.ancho, obstaculo.alto)
+        screen.draw.filled_rect(rect_obstaculo, color)
+        screen.draw.rect(rect_obstaculo, (255, 255, 255))
+        
+        # Dibujar hitbox en modo debug
+        if self.mostrar_hitbox:
+            screen.draw.rect(rect_obstaculo, (255, 0, 0), 1)
         
         # Dibujar tipo de obstáculo como texto
         screen.draw.text(
@@ -319,15 +332,94 @@ class PantallaJuego:
             fontsize=10,
             color="white"
         )
+        
+        screen.draw.text(
+            "T Mostrar Árbol",
+            (x, y + 60),
+            fontsize=10,
+            color="white"
+        )
+        
+        screen.draw.text(
+            "H Mostrar Hitboxes",
+            (x, y + 75),
+            fontsize=10,
+            color="white"
+        )
+        
+        screen.draw.text(
+            "B Recorrido en anchura",
+            (x - 80, y + 90),
+            fontsize=10,
+            color="white"
+        )
+        
+        screen.draw.text(
+            "D Recorrido en profundidad",
+            (x - 80, y + 105),
+            fontsize=10,
+            color="white"
+        )
 
-    def dibujar_ventana_arbol(self, screen):
+    def dibujar_visualizacion_arbol(self, screen):
         """
-        Dibuja la ventana emergente con el árbol AVL si está activa.
+        Dibuja la visualización del árbol AVL.
 
         Args:
             screen: Superficie de pygame donde dibujar
         """
-        pass
+        if not self.gestor_juego or not self.visualizador_arbol:
+            return
+            
+        # Dibujar fondo semitransparente
+        fondo_rect = pygame.Rect(self.ancho - 420, 50, 400, 400)
+        s = pygame.Surface((400, 400), pygame.SRCALPHA)
+        s.fill((0, 0, 0, 180))  # Fondo negro semitransparente
+        screen.blit(s, (self.ancho - 420, 50))
+        
+        # Dibujar título
+        screen.draw.text(
+            "Visualización del Árbol AVL",
+            (self.ancho - 410, 60),
+            fontsize=14,
+            color="white"
+        )
+        
+        # Actualizar el árbol con los obstáculos visibles actuales
+        self.visualizador_arbol.recorrido_actual = self.gestor_juego.obstaculos_visibles
+        
+        # Dibujar el árbol
+        self.visualizador_arbol.dibujar_arbol(
+            screen, 
+            self.gestor_juego.arbol_obstaculos,
+            x_offset=self.ancho - 420, 
+            y_offset=50
+        )
+        
+        # Información adicional
+        total_nodos = self.gestor_juego.arbol_obstaculos.obtener_total_obstaculos()
+        obstaculos_visibles = len(self.gestor_juego.obstaculos_visibles)
+        screen.draw.text(
+            f"Total de obstáculos: {total_nodos}",
+            (self.ancho - 410, 430),
+            fontsize=12,
+            color="white"
+        )
+        screen.draw.text(
+            f"Obstáculos visibles: {obstaculos_visibles}",
+            (self.ancho - 410, 450),
+            fontsize=12,
+            color="yellow" if obstaculos_visibles > 0 else "white"
+        )
+        
+        # Posición del carrito
+        if self.gestor_juego.carrito:
+            screen.draw.text(
+                f"Posición del carrito: {self.gestor_juego.carrito.x}",
+                (self.ancho - 410, 470),
+                fontsize=12,
+                color="cyan"
+            )
 
     def manejar_evento(self, evento):
         """

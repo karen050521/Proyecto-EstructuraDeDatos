@@ -53,7 +53,14 @@ class ControladorConfiguracion:
 
     def _manejar_clic_controles(self, pos: Tuple[int, int]) -> Optional[str]:
         """Maneja clics en el área de controles."""
-        # Componentes
+        # Verificar primero el botón de iniciar juego ya que es prioritario
+        print(f"Verificando clic en botón iniciar juego en posición: {pos}")
+        if self.pantalla.boton_iniciar.verificar_clic(pos):
+            print("¡Clic detectado en el botón iniciar juego!")
+            self.pantalla.boton_iniciar.manejar_clic(pos)
+            return self.pantalla._iniciar_juego()
+
+        # Resto de componentes
         if self.pantalla.campo_x.verificar_clic(pos):
             self.pantalla.campo_x.activar()
             self.pantalla.campo_y.desactivar()
@@ -88,8 +95,11 @@ class ControladorConfiguracion:
         if self.pantalla.boton_profundidad.manejar_clic(pos):
             return None
 
-        if self.pantalla.boton_iniciar.manejar_clic(pos):
-            return "iniciar_juego"
+        # Desactivar campos si se hace clic fuera
+        self.pantalla.campo_x.desactivar()
+        self.pantalla.campo_y.desactivar()
+
+        return None
 
         # Desactivar campos si se hace clic fuera
         self.pantalla.campo_x.desactivar()

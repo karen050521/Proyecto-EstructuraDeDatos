@@ -44,11 +44,12 @@ class GestorJuego:
         self.refresco_ms: int = 200  # milisegundos entre frames
         self.altura_salto: int = 50  # píxeles
         self.color_carrito_inicial: str = "azul"
+        self.energia_inicial: int = 100   # energía inicial del carrito
 
         # Estado del juego
         self.distancia_recorrida: int = 0
         self.obstaculos_visibles: List[Obstaculo] = []
-        self.rango_vision: int = 150  # píxeles hacia adelante
+        self.rango_vision: int = 1000  # píxeles hacia adelante (aumentado)
         self.puntuacion: int = 0
         self.tiempo_juego: float = 0
 
@@ -74,6 +75,23 @@ class GestorJuego:
                 self.color_carrito_inicial = configuracion.get(
                     "color_carrito_inicial", "azul"
                 )
+                self.energia_inicial = configuracion.get("energia_inicial", 100)
+                
+                # Validar tipos y rangos
+                if not isinstance(self.velocidad_carrito, (int, float)) or self.velocidad_carrito <= 0:
+                    raise ValueError("velocidad_carrito debe ser un número positivo")
+                if not isinstance(self.distancia_total, int) or self.distancia_total <= 0:
+                    raise ValueError("distancia_total debe ser un entero positivo")
+
+                # Cargar daños personalizados por tipo de obstáculo si existen
+                daños_config = config.get("daño_obstaculos", {})
+                if daños_config:
+                    for tipo_str, daño in daños_config.items():
+                        try:
+                            tipo_enum = TipoObstaculo(tipo_str)
+                            Obstaculo.DAÑO_POR_TIPO[tipo_enum] = daño
+                        except ValueError:
+                            print(f"Tipo de obstáculo desconocido: {tipo_str}")
 
                 # Cargar obstáculos predefinidos
                 obstaculos_config = config.get("obstaculos", [])
@@ -87,8 +105,17 @@ class GestorJuego:
 
                 print(f"Total de obstáculos en el árbol: {self.arbol_obstaculos.obtener_total_obstaculos()}")
                 return True
-        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            print(f"Error cargando configuración: {e}")
+        except FileNotFoundError:
+            print(f"Error: No se encontró el archivo {self.archivo_configuracion}")
+            return False
+        except json.JSONDecodeError as e:
+            print(f"Error: Archivo JSON mal formateado - {e}")
+            return False
+        except KeyError as e:
+            print(f"Error: Falta la clave requerida {e} en la configuración")
+            return False
+        except ValueError as e:
+            print(f"Error: Valor inválido en la configuración - {e}")
             return False
 
     def guardar_configuracion(self) -> bool:
@@ -134,7 +161,10 @@ class GestorJuego:
         Inicializa todos los componentes necesarios para empezar a jugar.
         """
         # Crear carrito
-        self.carrito = Carrito(x_inicial=50, y_inicial=1, energia_maxima=100)
+        self.carrito = Carrito(x_inicial=50, y_inicial=1, energia_maxima=self.energia_inicial)
+        
+        # Configurar velocidad desde la configuración
+        self.carrito.velocidad_x = self.velocidad_carrito
 
         # Reiniciar estado del juego
         self.distancia_recorrida = 0
@@ -171,10 +201,25 @@ class GestorJuego:
         self.carrito.actualizar(delta_tiempo)
 
         # Actualizar distancia recorrida
+        distancia_anterior = self.distancia_recorrida
         self.distancia_recorrida = self.carrito.x - 50  # Posición inicial
+        
+        # Acumular puntos por distancia recorrida (0.1 puntos por unidad de distancia)
+        distancia_nueva = self.distancia_recorrida - distancia_anterior
+        if distancia_nueva > 0:
+            self.puntuacion += distancia_nueva * 0.1
 
         # Actualizar obstáculos visibles
+        obstaculos_visibles_antes = set(self.obstaculos_visibles)
         self.actualizar_obstaculos_visibles()
+        obstaculos_visibles_ahora = set(self.obstaculos_visibles)
+        
+        # Detectar obstáculos superados (ya no están en el rango visible)
+        obstaculos_superados = obstaculos_visibles_antes - obstaculos_visibles_ahora
+        if obstaculos_superados:
+            # Premiar al jugador por cada obstáculo evitado exitosamente
+            self.puntuacion += len(obstaculos_superados) * 5
+            print(f"¡{len(obstaculos_superados)} obstáculos superados! +{len(obstaculos_superados) * 5} puntos")
 
         # Verificar colisiones
         obstaculos_colisionados = self.verificar_colisiones()
@@ -207,6 +252,17 @@ class GestorJuego:
         self.obstaculos_visibles = self.arbol_obstaculos.buscar_en_rango(
             x_min, x_max, y_min, y_max
         )
+        
+        # Imprimir información de depuración cada 300 frames aproximadamente
+        if int(self.tiempo_juego * 10) % 300 == 0:
+            print(f"Posición carrito: {x_actual}, Buscando obstáculos entre {x_min} y {x_max}")
+            print(f"Obstáculos encontrados: {len(self.obstaculos_visibles)}")
+            print(f"Obstáculos totales en árbol: {self.arbol_obstaculos.obtener_total_obstaculos()}")
+            
+            if len(self.obstaculos_visibles) > 0:
+                print("Primer obstáculo visible:", self.obstaculos_visibles[0])
+            else:
+                print("No hay obstáculos visibles en este rango")
 
     def verificar_colisiones(self) -> List[Obstaculo]:
         """
@@ -243,11 +299,19 @@ class GestorJuego:
         self.carrito.estado = EstadoCarrito.COLISIONANDO
 
         # Actualizar puntuación (penalización por colisión)
-        self.puntuacion = max(0, self.puntuacion - daño)
+        puntos_perdidos = daño
+        self.puntuacion = max(0, self.puntuacion - puntos_perdidos)
+        
+        # Mostrar información de colisión
+        print(f"¡COLISIÓN! con {obstaculo.tipo.value} - Daño: {daño} - Puntos perdidos: {puntos_perdidos}")
+        print(f"Energía restante: {self.carrito.energia_actual:.1f} - Puntuación: {self.puntuacion:.1f}")
 
         # Remover obstáculo del árbol (opcional, dependiendo del tipo)
         if obstaculo.tipo in [TipoObstaculo.CONO, TipoObstaculo.ACEITE]:
-            self.arbol_obstaculos.eliminar(obstaculo)
+            if self.arbol_obstaculos.eliminar(obstaculo):
+                print(f"Obstáculo {obstaculo.tipo.value} eliminado del árbol")
+                # Al eliminar un obstáculo, se modifica el árbol AVL
+                # Esto es importante para mostrar el comportamiento dinámico del árbol
 
     def verificar_condiciones_fin_juego(self) -> bool:
         """
@@ -384,5 +448,10 @@ class GestorJuego:
 
         # Convertir string a enum
         tipo = TipoObstaculo(tipo_str)
+        
+        # Validar que la posición Y es válida (0, 1, 2)
+        if y not in [0, 1, 2]:
+            print(f"ADVERTENCIA: Posición Y inválida: {y}, se ajustará a un valor válido")
+            y = max(0, min(2, y))
 
         return Obstaculo(x, y, tipo, ancho, alto)

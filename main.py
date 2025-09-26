@@ -126,20 +126,32 @@ def on_key_down(key):
     # Delegar a la pantalla actual
     if gestor_juego.estado_actual == EstadoJuego.CONFIGURACION:
         resultado = pantalla_configuracion.manejar_tecla(key)
+        print(f"Resultado de la tecla en configuración: {resultado}")
         if resultado == "iniciar_juego":
+            print("¡Iniciando juego desde teclado!")
             gestor_juego.cambiar_estado(EstadoJuego.JUGANDO)
             gestor_juego.inicializar_juego()
 
     elif gestor_juego.estado_actual == EstadoJuego.JUGANDO:
-        # Controles del juego
+        # Controles del juego (corregidos para no estar invertidos)
         if key == keys.UP:
-            gestor_juego.carrito.mover_arriba()
-        elif key == keys.DOWN:
             gestor_juego.carrito.mover_abajo()
+        elif key == keys.DOWN:
+            gestor_juego.carrito.mover_arriba()
         elif key == keys.SPACE:
             gestor_juego.carrito.saltar()
         elif key == keys.P:
             gestor_juego.pausar_juego()
+        elif key == keys.T:
+            pantalla_juego.mostrar_arbol = not pantalla_juego.mostrar_arbol
+        elif key == keys.H:  # Mostrar/ocultar hitboxes (modo debug)
+            pantalla_juego.mostrar_hitbox = not pantalla_juego.mostrar_hitbox
+        elif key == keys.B:  # Mostrar recorrido en anchura
+            if pantalla_juego.visualizador_arbol and pantalla_juego.mostrar_arbol:
+                pantalla_juego.visualizador_arbol.iniciar_recorrido_anchura(gestor_juego.arbol_obstaculos)
+        elif key == keys.D:  # Mostrar recorrido en profundidad
+            if pantalla_juego.visualizador_arbol and pantalla_juego.mostrar_arbol:
+                pantalla_juego.visualizador_arbol.iniciar_recorrido_profundidad(gestor_juego.arbol_obstaculos)
 
 
 def on_mouse_down(pos):
@@ -155,7 +167,9 @@ def on_mouse_down(pos):
     # Delegar a la pantalla actual
     if gestor_juego.estado_actual == EstadoJuego.CONFIGURACION:
         resultado = pantalla_configuracion.manejar_clic_mouse(pos)
+        print(f"Resultado del clic en configuración: {resultado}")
         if resultado == "iniciar_juego":
+            print("¡Iniciando juego desde clic del mouse!")
             gestor_juego.cambiar_estado(EstadoJuego.JUGANDO)
             gestor_juego.inicializar_juego()
 

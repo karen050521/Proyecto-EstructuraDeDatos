@@ -138,6 +138,25 @@ class VisualizadorArbol:
             fontsize=12,
             color=self.color_texto
         )
+        
+        # Dibujar factor de balance
+        factor_balance = nodo.obtener_factor_balance()
+        color_balance = (255, 255, 255)  # Blanco por defecto
+        
+        # Color según factor de balance
+        if factor_balance > 1 or factor_balance < -1:
+            color_balance = (255, 50, 50)  # Rojo si está desbalanceado
+        elif factor_balance == 0:
+            color_balance = (50, 255, 50)  # Verde si está perfectamente balanceado
+        else:
+            color_balance = (255, 255, 50)  # Amarillo para balance +/-1
+            
+        screen.draw.text(
+            f"FB:{factor_balance}",
+            (x - 15, y + 5),
+            fontsize=10,
+            color=color_balance
+        )
 
     def calcular_posiciones_nodos(self, arbol_avl):
         """
@@ -280,6 +299,28 @@ class VisualizadorArbol:
         self.paso_recorrido_actual = 0
         self.animando_recorrido = True
 
+    def iniciar_recorrido_anchura(self, arbol_avl):
+        """
+        Inicia la animación de un recorrido en anchura (BFS).
+        
+        Args:
+            arbol_avl: Árbol AVL a recorrer
+        """
+        recorrido = arbol_avl.recorrido_en_anchura()
+        print(f"Iniciando recorrido en anchura con {len(recorrido)} nodos")
+        self.iniciar_animacion_recorrido(recorrido)
+        
+    def iniciar_recorrido_profundidad(self, arbol_avl):
+        """
+        Inicia la animación de un recorrido en profundidad (DFS).
+        
+        Args:
+            arbol_avl: Árbol AVL a recorrer
+        """
+        recorrido = arbol_avl.recorrido_en_profundidad()
+        print(f"Iniciando recorrido en profundidad con {len(recorrido)} nodos")
+        self.iniciar_animacion_recorrido(recorrido)
+
     def actualizar_animacion_recorrido(self):
         """
         Actualiza el estado de la animación del recorrido.
@@ -287,7 +328,18 @@ class VisualizadorArbol:
         Returns:
             bool: True si la animación continúa, False si terminó
         """
-        pass
+        if not self.animando_recorrido or not self.recorrido_actual:
+            return False
+            
+        # Actualizar el paso actual
+        self.paso_recorrido_actual += 1
+        
+        # Verificar si la animación ha terminado
+        if self.paso_recorrido_actual >= len(self.recorrido_actual):
+            self.animando_recorrido = False
+            return False
+            
+        return True
 
     def dibujar_informacion_nodo(self, screen, nodo, x, y):
         """

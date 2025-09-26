@@ -104,8 +104,12 @@ class BotonModerno:
             bool: True si se ejecutó la acción
         """
         if self.verificar_clic(pos):
+            print(f"Clic en botón: {self.texto}")
             if self.accion:
-                self.accion()
+                resultado = self.accion()
+                print(f"Resultado de la acción del botón: {resultado}")
+            else:
+                print("Este botón no tiene acción definida")
             return True
         return False
 

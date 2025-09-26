@@ -151,6 +151,7 @@ class PantallaConfiguracion:
     def _iniciar_juego(self):
         """Inicia el juego."""
         print("Iniciando juego...")
+        return "iniciar_juego"
 
 
     def dibujar(self, screen):

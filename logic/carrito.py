@@ -65,6 +65,15 @@ class Carrito:
         self.mover_automaticamente()
         if self.estado == EstadoCarrito.SALTANDO:
             self.actualizar_salto()
+            
+        # Consumir energía gradualmente mientras avanza
+        # Consumo proporcional a la velocidad (ajustado para ser equilibrado)
+        consumo_energia = 0.01 * self.velocidad_x  # Reducido a 1/5 del valor anterior
+        self.energia_actual = max(0, self.energia_actual - consumo_energia)
+        
+        # Imprimir información de depuración cada 100 frames aproximadamente
+        if int(self.x) % 100 == 0:
+            print(f"Energía actual: {self.energia_actual:.2f}, Consumo: {consumo_energia:.4f}, Velocidad: {self.velocidad_x}")
 
     def mover_automaticamente(self) -> None:
         """
@@ -143,6 +152,12 @@ class Carrito:
             dict: Diccionario con 'x', 'y', 'ancho', 'alto'
         """
         return {"x": self.x, "y": self.y, "ancho": self.ancho, "alto": self.alto}
+        
+    def get_hitbox(self) -> 'pygame.Rect':
+        """Alias para obtener_rectangulo_colision que devuelve pygame.Rect."""
+        import pygame
+        rect_data = self.obtener_rectangulo_colision()
+        return pygame.Rect(rect_data["x"], rect_data["y"], rect_data["ancho"], rect_data["alto"])
 
     def colisiona_con(self, obstaculo) -> bool:
         """
@@ -165,11 +180,18 @@ class Carrito:
 
         # Verificar colisión en Y
         colision_y = (
-            carrito_rect["y"] < obstaculo_rect["y"] + obstaculo_rect["alto"]
-            and carrito_rect["y"] + carrito_rect["alto"] > obstaculo_rect["y"]
+            carrito_rect["y"] == obstaculo_rect["y"]  # Usar igualdad para comparar carriles
         )
 
-        return colision_x and colision_y
+        colision = colision_x and colision_y
+        
+        # Información de depuración en caso de colisión
+        if colision:
+            print(f"¡COLISIÓN! con {obstaculo}")
+            print(f"Carrito: {carrito_rect}")
+            print(f"Obstáculo: {obstaculo_rect}")
+        
+        return colision
 
     def esta_saltando(self) -> bool:
         """

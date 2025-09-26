@@ -71,6 +71,12 @@ class Obstaculo:
             dict: Diccionario con 'x', 'y', 'ancho', 'alto' del rectángulo
         """
         return {"x": self.x, "y": self.y, "ancho": self.ancho, "alto": self.alto}
+    
+    def get_hitbox(self) -> 'pygame.Rect':
+        """Alias para obtener_rectangulo_colision que devuelve pygame.Rect."""
+        import pygame
+        rect_data = self.obtener_rectangulo_colision()
+        return pygame.Rect(rect_data["x"], rect_data["y"], rect_data["ancho"], rect_data["alto"])
 
     def esta_en_rango(self, x_min: int, x_max: int, y_min: int, y_max: int) -> bool:
         """
@@ -79,13 +85,20 @@ class Obstaculo:
         Args:
             x_min (int): Límite inferior X
             x_max (int): Límite superior X
-            y_min (int): Límite inferior Y
-            y_max (int): Límite superior Y
+            y_min (int): Límite inferior Y (carril)
+            y_max (int): Límite superior Y (carril)
 
         Returns:
             bool: True si está dentro del rango
         """
-        return x_min <= self.x <= x_max and y_min <= self.y <= y_max
+        en_rango_x = x_min <= self.x <= x_max
+        en_rango_y = y_min <= self.y <= y_max
+        
+        # Debugging para ver si está en rango
+        if en_rango_x and en_rango_y and (self.x - x_min < 100):  # Solo imprimir los que están cerca del límite
+            print(f"Obstáculo en rango: {self} - X: {x_min} <= {self.x} <= {x_max}, Y: {y_min} <= {self.y} <= {y_max}")
+            
+        return en_rango_x and en_rango_y
 
     def obtener_sprite_nombre(self) -> str:
         """
