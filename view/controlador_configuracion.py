@@ -47,7 +47,9 @@ class ControladorConfiguracion:
 
         # Verificar clic en controles
         if self.pantalla.area_controles.collidepoint(x, y):
-            return self._manejar_clic_controles(pos)
+            resultado = self._manejar_clic_controles(pos)
+            print(f"🔍 RESULTADO DE _manejar_clic_controles(): {resultado}")
+            return resultado
 
         return None
 
@@ -57,8 +59,9 @@ class ControladorConfiguracion:
         print(f"Verificando clic en botón iniciar juego en posición: {pos}")
         if self.pantalla.boton_iniciar.verificar_clic(pos):
             print("¡Clic detectado en el botón iniciar juego!")
-            self.pantalla.boton_iniciar.manejar_clic(pos)
-            return self.pantalla._iniciar_juego()
+            resultado = self.pantalla._iniciar_juego()
+            print(f"🔍 RESULTADO DE _iniciar_juego(): {resultado}")
+            return resultado
 
         # Resto de componentes
         if self.pantalla.campo_x.verificar_clic(pos):

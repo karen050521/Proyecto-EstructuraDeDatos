@@ -24,7 +24,7 @@ class Carrito:
     def __init__(
         self,
         x_inicial: int = 50,
-        y_inicial: int = 1,
+        y_inicial: int = 2,  # Comenzar en el carril 2 (centro-abajo)
         energia_maxima: int = 100,
     ) -> None:
         """
@@ -32,7 +32,7 @@ class Carrito:
 
         Args:
             x_inicial (int): Posición X inicial
-            y_inicial (int): Carril inicial (0=abajo, 1=medio, 2=arriba)
+            y_inicial (int): Carril inicial (0-5: 0,1,2=carriles inferiores; 3,4,5=carriles superiores)
             energia_maxima (int): Energía máxima del carrito
         """
         self.x: int = x_inicial
@@ -85,14 +85,14 @@ class Carrito:
         """
         Mueve el carrito un carril hacia arriba (si es posible).
         """
-        if self.y < 2:  # 0=abajo, 1=medio, 2=arriba
+        if self.y < 5:  # 0=abajo, 5=arriba (6 carriles totales: 0,1,2,3,4,5)
             self.y += 1
 
     def mover_abajo(self) -> None:
         """
         Mueve el carrito un carril hacia abajo (si es posible).
         """
-        if self.y > 0:  # 0=abajo, 1=medio, 2=arriba
+        if self.y > 0:  # 0=abajo, 5=arriba (6 carriles totales: 0,1,2,3,4,5)
             self.y -= 1
 
     def saltar(self) -> None:
@@ -143,7 +143,7 @@ class Carrito:
         if cantidad_daño > 0:
             self.energia_actual = max(0, self.energia_actual - cantidad_daño)
         return self.energia_actual > 0
-
+ 
     def obtener_rectangulo_colision(self) -> dict:
         """
         Obtiene el rectángulo de colisión actual del carrito.
@@ -224,13 +224,13 @@ class Carrito:
             else 0.0
         )
 
-    def reiniciar(self, x_inicial: int = 50, y_inicial: int = 1) -> None:
+    def reiniciar(self, x_inicial: int = 50, y_inicial: int = 2) -> None:
         """
         Reinicia el carrito a su estado inicial.
 
         Args:
             x_inicial (int): Nueva posición X inicial
-            y_inicial (int): Nuevo carril inicial
+            y_inicial (int): Nuevo carril inicial (0-5)
         """
         self.x = x_inicial
         self.y = y_inicial

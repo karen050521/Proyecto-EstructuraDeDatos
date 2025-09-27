@@ -43,7 +43,7 @@ class Obstaculo:
 
         Args:
             x (int): Posición X en la carretera (distancia)
-            y (int): Posición Y (carril: 0=abajo, 1=medio, 2=arriba)
+            y (int): Posición Y (carril: 0-5, donde 0,1,2=carriles inferiores y 3,4,5=carriles superiores)
             tipo (TipoObstaculo): Tipo de obstáculo
             ancho (int): Ancho del obstáculo en píxeles
             alto (int): Alto del obstáculo en píxeles

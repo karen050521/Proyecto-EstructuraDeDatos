@@ -161,7 +161,7 @@ class GestorJuego:
         Inicializa todos los componentes necesarios para empezar a jugar.
         """
         # Crear carrito
-        self.carrito = Carrito(x_inicial=50, y_inicial=1, energia_maxima=self.energia_inicial)
+        self.carrito = Carrito(x_inicial=50, y_inicial=2, energia_maxima=self.energia_inicial)
         
         # Configurar velocidad desde la configuración
         self.carrito.velocidad_x = self.velocidad_carrito
@@ -214,6 +214,9 @@ class GestorJuego:
         self.actualizar_obstaculos_visibles()
         obstaculos_visibles_ahora = set(self.obstaculos_visibles)
         
+        # Eliminar obstáculos que ya pasó el carrito (optimización del árbol)
+        self.eliminar_obstaculos_pasados()
+        
         # Detectar obstáculos superados (ya no están en el rango visible)
         obstaculos_superados = obstaculos_visibles_antes - obstaculos_visibles_ahora
         if obstaculos_superados:
@@ -246,7 +249,7 @@ class GestorJuego:
         x_min = x_actual
         x_max = x_actual + self.rango_vision
         y_min = 0  # Todos los carriles
-        y_max = 2
+        y_max = 5  # Ahora tenemos 6 carriles (0-5)
 
         # Usar la búsqueda eficiente del árbol AVL
         self.obstaculos_visibles = self.arbol_obstaculos.buscar_en_rango(
@@ -263,6 +266,34 @@ class GestorJuego:
                 print("Primer obstáculo visible:", self.obstaculos_visibles[0])
             else:
                 print("No hay obstáculos visibles en este rango")
+
+    def eliminar_obstaculos_pasados(self) -> None:
+        """
+        Elimina del árbol AVL los obstáculos que el carrito ya pasó completamente.
+        Esto optimiza el árbol y reduce su tamaño a medida que avanza el juego.
+        """
+        if self.carrito is None:
+            return
+            
+        # Definir la zona "pasada" como obstáculos que están significativamente atrás del carrito
+        x_carrito = self.carrito.x
+        x_limite_pasado = x_carrito - 200  # 200 píxeles atrás del carrito
+        
+        # Buscar obstáculos que están en la zona pasada
+        obstaculos_pasados = self.arbol_obstaculos.buscar_en_rango(
+            0, x_limite_pasado, 0, 5  # Desde el inicio hasta el límite pasado, todos los carriles
+        )
+        
+        # Eliminar obstáculos pasados del árbol
+        obstaculos_eliminados = 0
+        for obstaculo in obstaculos_pasados:
+            if self.arbol_obstaculos.eliminar(obstaculo):
+                obstaculos_eliminados += 1
+        
+        # Información de depuración cada cierto tiempo
+        if obstaculos_eliminados > 0:
+            print(f"Eliminados {obstaculos_eliminados} obstáculos pasados del árbol AVL")
+            print(f"Total de obstáculos restantes: {self.arbol_obstaculos.obtener_total_obstaculos()}")
 
     def verificar_colisiones(self) -> List[Obstaculo]:
         """
@@ -449,9 +480,9 @@ class GestorJuego:
         # Convertir string a enum
         tipo = TipoObstaculo(tipo_str)
         
-        # Validar que la posición Y es válida (0, 1, 2)
-        if y not in [0, 1, 2]:
+        # Validar que la posición Y es válida (0, 1, 2, 3, 4, 5)
+        if y not in [0, 1, 2, 3, 4, 5]:
             print(f"ADVERTENCIA: Posición Y inválida: {y}, se ajustará a un valor válido")
-            y = max(0, min(2, y))
+            y = max(0, min(5, y))
 
         return Obstaculo(x, y, tipo, ancho, alto)

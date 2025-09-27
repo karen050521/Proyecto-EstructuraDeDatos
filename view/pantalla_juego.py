@@ -24,13 +24,18 @@ class PantallaJuego:
         self.alto = alto
         self.gestor_juego = None  # Se asigna externamente
 
-        # Configuración de la carretera
-        self.alto_carretera = 300
+        # Configuración de la carretera con 6 carriles (3 arriba, 3 abajo)
+        self.alto_carretera = 400
         self.y_carretera = alto - self.alto_carretera
         self.carriles = [
-            self.y_carretera + 50,  # Carril inferior (y=0)
-            self.y_carretera + 150,  # Carril medio (y=1)
-            self.y_carretera + 250,  # Carril superior (y=2)
+            # Carriles inferiores (0, 1, 2)
+            self.y_carretera + 50,   # Carril inferior 1 (y=0)
+            self.y_carretera + 100,  # Carril inferior 2 (y=1)
+            self.y_carretera + 150,  # Carril inferior 3 (y=2)
+            # Carriles superiores (3, 4, 5)
+            self.y_carretera + 250,  # Carril superior 1 (y=3)
+            self.y_carretera + 300,  # Carril superior 2 (y=4)
+            self.y_carretera + 350,  # Carril superior 3 (y=5)
         ]
 
         # Configuración visual
@@ -76,7 +81,7 @@ class PantallaJuego:
 
     def dibujar_carretera(self, screen):
         """
-        Dibuja la carretera y los carriles.
+        Dibuja la carretera con dos carriles principales (3 subcarriles cada uno).
 
         Args:
             screen: Superficie de pygame donde dibujar
@@ -87,16 +92,42 @@ class PantallaJuego:
             (100, 100, 100)
         )
         
-        # Líneas divisorias de carriles
+        # Línea divisoria central entre los dos carriles principales (amarilla sólida)
+        y_division_central = self.y_carretera + 200  # Entre el carril 2 y 3
+        for x in range(0, self.ancho, 1):
+            screen.draw.line(
+                (x, y_division_central),
+                (x + 1, y_division_central),
+                (255, 255, 0)  # Amarillo
+            )
+        
+        # Líneas divisorias de subcarriles (blancas discontinuas)
         for i, y_carril in enumerate(self.carriles):
+            # No dibujar línea después del último carril
             if i < len(self.carriles) - 1:
-                # Línea blanca discontinua
-                for x in range(0, self.ancho, 20):
-                    screen.draw.line(
-                        (x, y_carril + 50),
-                        (x + 10, y_carril + 50),
-                        (255, 255, 255)
-                    )
+                # No dibujar línea en la división central (entre carril 2 y 3)
+                if i != 2:
+                    # Línea blanca discontinua
+                    for x in range(0, self.ancho, 20):
+                        screen.draw.line(
+                            (x, y_carril + 25),  # Centrar entre carriles
+                            (x + 10, y_carril + 25),
+                            (255, 255, 255)
+                        )
+        
+        # Líneas de borde de la carretera (blancas sólidas)
+        # Borde superior
+        screen.draw.line(
+            (0, self.y_carretera),
+            (self.ancho, self.y_carretera),
+            (255, 255, 255)
+        )
+        # Borde inferior
+        screen.draw.line(
+            (0, self.y_carretera + self.alto_carretera),
+            (self.ancho, self.y_carretera + self.alto_carretera),
+            (255, 255, 255)
+        )
 
     def dibujar_carrito(self, screen):
         """
@@ -286,6 +317,17 @@ class PantallaJuego:
             color="white"
         )
         
+        # Carril actual del carrito
+        carrito = self.gestor_juego.carrito
+        carril_nombre = "Inferior" if carrito.y <= 2 else "Superior"
+        subcarril = (carrito.y % 3) + 1
+        screen.draw.text(
+            f"Carril: {carril_nombre} {subcarril} (pos {carrito.y})",
+            (200, 40),
+            fontsize=12,
+            color="cyan"
+        )
+        
         # Obstáculos visibles
         screen.draw.text(
             f"Obstaculos visibles: {stats['obstaculos_visibles']}",
@@ -313,7 +355,7 @@ class PantallaJuego:
         )
         
         screen.draw.text(
-            "↑↓ Mover carril",
+            "↑↓ Mover carril (6 carriles)",
             (x, y + 15),
             fontsize=10,
             color="white"

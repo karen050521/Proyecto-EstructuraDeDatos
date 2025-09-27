@@ -30,7 +30,7 @@ class PantallaConfiguracion:
 
         # Áreas de la interfaz
         self.area_arbol = pygame.Rect(50, 100, 400, 400)
-        self.area_controles = pygame.Rect(500, 100, 250, 400)
+        self.area_controles = pygame.Rect(500, 100, 250, 500)
 
         # Visualizador del árbol
         self.visualizador = VisualizadorArbol(400, 400)
@@ -93,7 +93,7 @@ class PantallaConfiguracion:
         )
 
         self.boton_iniciar = BotonModerno(
-            "🚀 INICIAR JUEGO", x, y + 450, 150, 40, (255, 152, 0), self._iniciar_juego
+            "🚀 INICIAR JUEGO", x, y + 380, 150, 40, (255, 152, 0), self._iniciar_juego
         )
 
     def _validar_coordenada_x(self, valor: int) -> bool:
@@ -150,7 +150,7 @@ class PantallaConfiguracion:
 
     def _iniciar_juego(self):
         """Inicia el juego."""
-        print("Iniciando juego...")
+        print("🚀 ¡INICIANDO JUEGO DESDE PANTALLA DE CONFIGURACIÓN!")
         return "iniciar_juego"
 
 
@@ -248,7 +248,9 @@ class PantallaConfiguracion:
         Returns:
             str: Acción a realizar o None
         """
-        return self.controlador.manejar_clic_mouse(pos)
+        resultado = self.controlador.manejar_clic_mouse(pos)
+        print(f"🔍 RESULTADO DE controlador.manejar_clic_mouse(): {resultado}")
+        return resultado
 
 
     def manejar_tecla(self, tecla):
@@ -257,6 +259,9 @@ class PantallaConfiguracion:
 
         Args:
             tecla: Tecla presionada
+        
+        Returns:
+            str: Acción a realizar o None
         """
         return self.controlador.manejar_tecla(tecla)
 

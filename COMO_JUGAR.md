@@ -34,7 +34,12 @@ Este modo inicia el juego inmediatamente sin pasar por la pantalla de configurac
 
 ## Objetivo del Juego
 
-El objetivo es recorrer toda la distancia configurada evitando los obstáculos que aparecen en la carretera. Puedes cambiar de carril o saltar para evitarlos. ¡Cuidado! El carrito pierde energía constantemente mientras avanza, por lo que debes llegar al final antes de quedarte sin energía.
+El objetivo es recorrer toda la distancia configurada evitando los obstáculos que aparecen en la carretera. El juego cuenta con **dos carriles principales** (superior e inferior), cada uno con **3 subcarriles**, para un total de **6 posiciones** donde puedes mover el carrito:
+
+- **Carriles inferiores**: Posiciones 0, 1, 2 (de abajo hacia arriba)
+- **Carriles superiores**: Posiciones 3, 4, 5 (de abajo hacia arriba)
+
+Puedes cambiar de carril o saltar para evitar obstáculos. ¡Cuidado! El carrito pierde energía constantemente mientras avanza, por lo que debes llegar al final antes de quedarte sin energía.
 
 ## Pantalla de Configuración
 
@@ -65,3 +70,7 @@ En la pantalla de configuración puedes:
   - Pierde puntos al colisionar con obstáculos (según el daño del obstáculo)
 
 - **Actualización en tiempo real**: Observa cómo el árbol AVL se actualiza dinámicamente mientras juegas, destacando los obstáculos que están cerca del carrito y mostrando las rotaciones cuando ocurren.
+
+- **Optimización automática del árbol**: Los obstáculos que ya pasaste se eliminan automáticamente del árbol AVL, manteniendo la estructura optimizada y demostrando la eficiencia de la estructura de datos.
+
+- **Sistema de carriles avanzado**: Con 6 carriles distribuidos en dos niveles principales, el juego ofrece más estrategia y opciones de movimiento.
