@@ -6,6 +6,7 @@ Configurado para ejecutarse con pygame-zero.
 
 
 import pygame
+from pgzero.constants import keys
 from logic.gestor_juego import GestorJuego, EstadoJuego
 from view.pantalla_configuracion import PantallaConfiguracion
 from view.pantalla_juego import PantallaJuego
@@ -68,7 +69,27 @@ def draw():
         pantalla_juego.dibujar(screen)
     elif gestor_juego.estado_actual == EstadoJuego.PAUSADO:
         pantalla_juego.dibujar(screen)
-        # TODO: Dibujar overlay de pausa
+        # Dibujar overlay de pausa
+        # Crear overlay semitransparente
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 128))  # Negro con transparencia
+        screen.blit(overlay, (0, 0))
+        
+        # Texto de PAUSA
+        screen.draw.text(
+            "PAUSA",
+            center=(WIDTH//2, HEIGHT//2 - 50),
+            fontsize=48,
+            color="white"
+        )
+        
+        # Instrucciones
+        screen.draw.text(
+            "Presiona P para continuar",
+            center=(WIDTH//2, HEIGHT//2 + 20),
+            fontsize=20,
+            color="yellow"
+        )
     elif gestor_juego.estado_actual == EstadoJuego.JUEGO_TERMINADO:
         pantalla_juego.dibujar(screen)
         # TODO: Dibujar pantalla de fin de juego
@@ -152,6 +173,15 @@ def on_key_down(key):
         elif key == keys.D:  # Mostrar recorrido en profundidad
             if pantalla_juego.visualizador_arbol and pantalla_juego.mostrar_arbol:
                 pantalla_juego.visualizador_arbol.iniciar_recorrido_profundidad(gestor_juego.arbol_obstaculos)
+
+    elif gestor_juego.estado_actual == EstadoJuego.PAUSADO:
+        # Controles cuando el juego está pausado
+        if key == keys.P:
+            gestor_juego.pausar_juego()  # Despausa el juego
+        elif key == keys.T:
+            pantalla_juego.mostrar_arbol = not pantalla_juego.mostrar_arbol
+        elif key == keys.H:  # Mostrar/ocultar hitboxes (modo debug)
+            pantalla_juego.mostrar_hitbox = not pantalla_juego.mostrar_hitbox
 
 
 def on_mouse_down(pos):

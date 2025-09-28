@@ -4,7 +4,8 @@ Responsabilidad: Renderizar el juego y manejar la interacción durante la partid
 """
 
 import pygame
-from typing import List
+import os
+from typing import List, Dict
 
 
 class PantallaJuego:
@@ -51,6 +52,66 @@ class PantallaJuego:
         # Inicializar visualizador del árbol
         from view.visualizador_arbol import VisualizadorArbol
         self.visualizador_arbol = VisualizadorArbol(ancho=400, alto=400)
+        
+        # Cargar imágenes
+        self.imagenes = self._cargar_imagenes()
+
+    def _cargar_imagenes(self) -> Dict[str, pygame.Surface]:
+        """
+        Carga todas las imágenes necesarias para el juego.
+        
+        Returns:
+            Dict con las imágenes cargadas
+        """
+        imagenes = {}
+        ruta_imagenes = "images"
+        
+        try:
+            print("🎨 Cargando imágenes del juego...")
+            
+            # Cargar imagen del carrito (probar primero la mejorada, luego la original)
+            carrito_cargado = False
+            rutas_carrito = ["carrito_mejorado.png", "carrito.png"]
+            
+            for ruta in rutas_carrito:
+                ruta_completa = os.path.join(ruta_imagenes, ruta)
+                if os.path.exists(ruta_completa):
+                    imagenes["carrito"] = pygame.image.load(ruta_completa).convert_alpha()
+                    size = imagenes["carrito"].get_size()
+                    print(f"🚗 Carrito cargado: {ruta} ({size[0]}x{size[1]})")
+                    carrito_cargado = True
+                    break
+                    
+            if not carrito_cargado:
+                print("⚠️ No se encontró imagen del carrito")
+            
+            # Cargar imágenes de obstáculos (nuevas imágenes mejoradas)
+            obstaculos_ruta = {
+                "roca": "obstaculos/roca.png",
+                "cono": "obstaculos/cono.png", 
+                "hueco": "obstaculos/hueco.png",
+                "aceite": "obstaculos/aceite.png",
+                "barrera": "obstaculos/barrera.png",
+                "pincho": "hazzards/pincho.png"  # Usar la imagen existente
+            }
+            
+            contador_cargadas = 0
+            for tipo, archivo in obstaculos_ruta.items():
+                ruta_completa = os.path.join(ruta_imagenes, archivo)
+                if os.path.exists(ruta_completa):
+                    imagenes[tipo] = pygame.image.load(ruta_completa).convert_alpha()
+                    size = imagenes[tipo].get_size()
+                    print(f"✅ {tipo.capitalize()}: {archivo} ({size[0]}x{size[1]})")
+                    contador_cargadas += 1
+                else:
+                    print(f"⚠️ No encontrada: {tipo} -> {ruta_completa}")
+                    
+            print(f"🎮 Resumen: {contador_cargadas}/{len(obstaculos_ruta)} imágenes de obstáculos cargadas")
+                    
+        except Exception as e:
+            print(f"❌ Error cargando imágenes: {e}")
+            
+        return imagenes
 
     def dibujar(self, screen):
         """
@@ -160,10 +221,18 @@ class PantallaJuego:
         else:
             color = (0, 100, 255)  # Azul
         
-        # Dibujar carrito como rectángulo
+        # Dibujar carrito con imagen o rectángulo
         rect_carrito = pygame.Rect(x_pantalla, y_pantalla, carrito.ancho, carrito.alto)
-        screen.draw.filled_rect(rect_carrito, color)
-        screen.draw.rect(rect_carrito, (255, 255, 255))
+        
+        if "carrito" in self.imagenes:
+            # Usar imagen del carrito
+            imagen_carrito = self.imagenes["carrito"]
+            imagen_escalada = pygame.transform.scale(imagen_carrito, (carrito.ancho, carrito.alto))
+            screen.blit(imagen_escalada, (x_pantalla, y_pantalla))
+        else:
+            # Fallback a rectángulo
+            screen.draw.filled_rect(rect_carrito, color)
+            screen.draw.rect(rect_carrito, (255, 255, 255))
         
         # Dibujar hitbox en modo debug
         if self.mostrar_hitbox:
@@ -191,7 +260,13 @@ class PantallaJuego:
         for obstaculo in self.gestor_juego.obstaculos_visibles:
             # Calcular posición en pantalla
             x_pantalla = obstaculo.x - carrito.x + self.posicion_carrito_pantalla
-            y_pantalla = self.carriles[obstaculo.y] - 15
+            
+            # Posición Y ajustada según el tipo de obstáculo
+            if obstaculo.es_barrera():
+                # Las barreras ocupan 2 carriles de altura
+                y_pantalla = self.carriles[obstaculo.y] - 50  # Más arriba para ocupar 2 carriles
+            else:
+                y_pantalla = self.carriles[obstaculo.y] - 15
             
             # Solo dibujar si está en pantalla
             if -50 <= x_pantalla <= self.ancho + 50:
@@ -217,22 +292,30 @@ class PantallaJuego:
         
         color = colores.get(obstaculo.tipo.value, (128, 128, 128))
         
-        # Dibujar obstáculo como rectángulo
+        # Dibujar obstáculo con imagen o rectángulo
         rect_obstaculo = pygame.Rect(x, y, obstaculo.ancho, obstaculo.alto)
-        screen.draw.filled_rect(rect_obstaculo, color)
-        screen.draw.rect(rect_obstaculo, (255, 255, 255))
+        
+        # Intentar usar imagen del obstáculo
+        nombre_imagen = obstaculo.tipo.value
+        if nombre_imagen in self.imagenes:
+            imagen_obstaculo = self.imagenes[nombre_imagen]
+            imagen_escalada = pygame.transform.scale(imagen_obstaculo, (obstaculo.ancho, obstaculo.alto))
+            screen.blit(imagen_escalada, (x, y))
+        else:
+            # Fallback a rectángulo con color
+            screen.draw.filled_rect(rect_obstaculo, color)
+            screen.draw.rect(rect_obstaculo, (255, 255, 255))
+            # Dibujar tipo de obstáculo como texto
+            screen.draw.text(
+                obstaculo.tipo.value[:3].upper(),
+                (x + 2, y + 2),
+                fontsize=8,
+                color="white"
+            )
         
         # Dibujar hitbox en modo debug
         if self.mostrar_hitbox:
             screen.draw.rect(rect_obstaculo, (255, 0, 0), 1)
-        
-        # Dibujar tipo de obstáculo como texto
-        screen.draw.text(
-            obstaculo.tipo.value[:3].upper(),
-            (x + 2, y + 2),
-            fontsize=8,
-            color="white"
-        )
 
     def dibujar_hud(self, screen):
         """

@@ -52,7 +52,30 @@ class Obstaculo:
         self.y = y
         self.tipo = tipo
         self.ancho = ancho
-        self.alto = alto
+        
+        # Las barreras son más altas (ocupan 2 carriles de altura)
+        if tipo == TipoObstaculo.BARRERA:
+            self.alto = 100  # Doble altura para ocupar 2 carriles
+        else:
+            self.alto = alto
+            
+    def es_barrera(self) -> bool:
+        """
+        Verifica si este obstáculo es una barrera.
+        
+        Returns:
+            bool: True si es una barrera
+        """
+        return self.tipo == TipoObstaculo.BARRERA
+        
+    def se_puede_saltar(self) -> bool:
+        """
+        Verifica si este obstáculo se puede evitar saltando.
+        
+        Returns:
+            bool: True si se puede saltar (solo barreras)
+        """
+        return self.tipo == TipoObstaculo.BARRERA
 
     def obtener_daño(self) -> int:
         """

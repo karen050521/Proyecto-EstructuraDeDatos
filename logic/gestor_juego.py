@@ -298,16 +298,23 @@ class GestorJuego:
     def verificar_colisiones(self) -> List[Obstaculo]:
         """
         Verifica colisiones entre el carrito y los obstáculos visibles.
+        Las barreras se pueden evitar saltando.
 
         Returns:
             List[Obstaculo]: Lista de obstáculos con los que colisionó
         """
-        if self.carrito is None:
+        if not self.carrito or not self.obstaculos_visibles:
             return []
 
         obstaculos_colisionados = []
         for obstaculo in self.obstaculos_visibles:
+            # Verificar si hay colisión básica
             if self.carrito.colisiona_con(obstaculo):
+                # Si es una barrera y el carrito está saltando, NO hay colisión
+                if obstaculo.es_barrera() and self.carrito.esta_saltando():
+                    print(f"🦘 ¡Saltando sobre barrera en ({obstaculo.x}, {obstaculo.y})!")
+                    continue
+                    
                 obstaculos_colisionados.append(obstaculo)
 
         return obstaculos_colisionados
