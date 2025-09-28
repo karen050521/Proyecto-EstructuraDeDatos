@@ -92,7 +92,74 @@ def draw():
         )
     elif gestor_juego.estado_actual == EstadoJuego.JUEGO_TERMINADO:
         pantalla_juego.dibujar(screen)
-        # TODO: Dibujar pantalla de fin de juego
+        # Dibujar overlay de fin de juego
+        # Crear overlay semitransparente
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))  # Negro con transparencia más oscura
+        screen.blit(overlay, (0, 0))
+        
+        # Obtener estadísticas del juego
+        stats = gestor_juego.obtener_estadisticas()
+        
+        # Título de FIN DE JUEGO
+        screen.draw.text(
+            "JUEGO TERMINADO",
+            center=(WIDTH//2, HEIGHT//2 - 80),
+            fontsize=40,
+            color="red"
+        )
+        
+        # Mostrar razón del fin del juego
+        if gestor_juego.carrito and not gestor_juego.carrito.esta_vivo():
+            reason = "Sin energía"
+        elif gestor_juego.distancia_recorrida >= gestor_juego.distancia_total:
+            reason = "¡Meta alcanzada!"
+        else:
+            reason = "Juego terminado"
+            
+        screen.draw.text(
+            reason,
+            center=(WIDTH//2, HEIGHT//2 - 40),
+            fontsize=24,
+            color="yellow"
+        )
+        
+        # Estadísticas finales
+        screen.draw.text(
+            f"Puntuación final: {int(stats['puntuacion'])}",
+            center=(WIDTH//2, HEIGHT//2 - 5),
+            fontsize=20,
+            color="white"
+        )
+        
+        screen.draw.text(
+            f"Distancia recorrida: {int(stats['distancia_recorrida'])} m",
+            center=(WIDTH//2, HEIGHT//2 + 20),
+            fontsize=20,
+            color="white"
+        )
+        
+        screen.draw.text(
+            f"Tiempo jugado: {stats['tiempo_juego']:.1f} seg",
+            center=(WIDTH//2, HEIGHT//2 + 45),
+            fontsize=20,
+            color="white"
+        )
+        
+        # Instrucciones para reiniciar
+        screen.draw.text(
+            "Presiona R para reiniciar",
+            center=(WIDTH//2, HEIGHT//2 + 80),
+            fontsize=18,
+            color="lime"
+        )
+        
+        screen.draw.text(
+            "Presiona ESC para configurar",
+            center=(WIDTH//2, HEIGHT//2 + 105),
+            fontsize=18,
+            color="cyan"
+        )
 
     # Dibujar información de debug (temporal)
     screen.draw.text(
@@ -182,6 +249,16 @@ def on_key_down(key):
             pantalla_juego.mostrar_arbol = not pantalla_juego.mostrar_arbol
         elif key == keys.H:  # Mostrar/ocultar hitboxes (modo debug)
             pantalla_juego.mostrar_hitbox = not pantalla_juego.mostrar_hitbox
+    
+    elif gestor_juego.estado_actual == EstadoJuego.JUEGO_TERMINADO:
+        # Controles cuando el juego ha terminado
+        if key == keys.R:
+            print("¡Reiniciando juego!")
+            gestor_juego.reiniciar_juego()
+        elif key == keys.SPACE:
+            print("¡Reiniciando juego con ESPACIO!")
+            gestor_juego.reiniciar_juego()
+        # ESC ya está manejado en las teclas globales
 
 
 def on_mouse_down(pos):

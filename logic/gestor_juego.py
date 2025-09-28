@@ -434,6 +434,33 @@ class GestorJuego:
         self.puntuacion = 0
         self.tiempo_juego = 0
         self.estado_actual = EstadoJuego.JUGANDO
+        
+        # 🌳 REINICIAR EL ÁRBOL AVL: Limpiar y recargar desde JSON
+        print("🔄 Reiniciando árbol AVL...")
+        self.arbol_obstaculos.limpiar()
+        
+        # Recargar obstáculos desde la configuración JSON
+        try:
+            with open(self.archivo_configuracion, 'r', encoding='utf-8') as file:
+                config = json.load(file)
+                
+            obstaculos_config = config.get("obstaculos", [])
+            print(f"Recargando {len(obstaculos_config)} obstáculos desde configuración...")
+            
+            obstaculos_cargados = 0
+            for obs_data in obstaculos_config:
+                obstaculo = self._crear_obstaculo_desde_dict(obs_data)
+                if self.arbol_obstaculos.insertar(obstaculo):
+                    obstaculos_cargados += 1
+                else:
+                    print(f"Error recargando obstáculo: ({obstaculo.x}, {obstaculo.y})")
+                    
+            print(f"✅ Árbol reiniciado: {obstaculos_cargados} obstáculos restaurados")
+            print(f"Total en árbol: {self.arbol_obstaculos.obtener_total_obstaculos()}")
+            
+        except Exception as e:
+            print(f"⚠️ Error al recargar obstáculos: {e}")
+            print("El juego continuará con el árbol vacío")
 
     def pausar_juego(self) -> None:
         """
