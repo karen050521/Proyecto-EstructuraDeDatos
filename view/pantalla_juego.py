@@ -214,13 +214,13 @@ class PantallaJuego:
             y_pantalla -= altura_salto
         
         # Color del carrito según estado
-        if carrito.estado.value == "saltando":
-            color = (255, 255, 0)  # Amarillo
-        elif carrito.estado.value == "colisionando":
-            color = (255, 0, 0)    # Rojo
+        if carrito.esta_saltando():
+            color = (255, 255, 0)  # Amarillo cuando salta
+            mostrar_efecto = True
         else:
-            color = (0, 100, 255)  # Azul
-        
+            color = (0, 100, 255)  # Azul normal
+            mostrar_efecto = False
+
         # Dibujar carrito con imagen o rectángulo
         rect_carrito = pygame.Rect(x_pantalla, y_pantalla, carrito.ancho, carrito.alto)
         
@@ -229,12 +229,35 @@ class PantallaJuego:
             imagen_carrito = self.imagenes["carrito"]
             imagen_escalada = pygame.transform.scale(imagen_carrito, (carrito.ancho, carrito.alto))
             screen.blit(imagen_escalada, (x_pantalla, y_pantalla))
+            
+            # Aplicar efecto de salto solo cuando está saltando
+            if mostrar_efecto:
+                # Crear efecto de resplandor circular suave
+                centro_x = x_pantalla + carrito.ancho // 2
+                centro_y = y_pantalla + carrito.alto // 2
+                
+                # Dibujar múltiples círculos concéntricos para efecto de resplandor
+                for i in range(3):
+                    radio = 25 + i * 8
+                    alpha = 60 - i * 15  # Transparencia decreciente
+                    
+                    # Crear superficie circular para el resplandor
+                    resplandor = pygame.Surface((radio * 2, radio * 2), pygame.SRCALPHA)
+                    pygame.draw.circle(resplandor, (255, 255, 0, alpha), (radio, radio), radio)
+                    
+                    # Posicionar el resplandor centrado en el carrito
+                    pos_x = centro_x - radio
+                    pos_y = centro_y - radio
+                    screen.blit(resplandor, (pos_x, pos_y))
+                
+                # Agregar efecto de brillo sutil en los bordes del carrito
+                brillo = pygame.Surface((carrito.ancho + 4, carrito.alto + 4), pygame.SRCALPHA)
+                pygame.draw.rect(brillo, (255, 255, 100, 40), (0, 0, carrito.ancho + 4, carrito.alto + 4), 2)
+                screen.blit(brillo, (x_pantalla - 2, y_pantalla - 2))
         else:
             # Fallback a rectángulo
             screen.draw.filled_rect(rect_carrito, color)
-            screen.draw.rect(rect_carrito, (255, 255, 255))
-        
-        # Dibujar hitbox en modo debug
+            screen.draw.rect(rect_carrito, (255, 255, 255))        # Dibujar hitbox en modo debug
         if self.mostrar_hitbox:
             screen.draw.rect(rect_carrito, (255, 0, 0), 1)
             screen.draw.text(
